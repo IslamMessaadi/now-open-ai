@@ -17,4 +17,4 @@ Custom table with single In/Out Open AI Request. It Maybe be used for E.x for KB
 
 # Enjoy:
 
-![Open AI usage - VA](https://user-images.githubusercontent.com/37014061/209434787-297a68b5-c532-49f8-b030-fbbc74864186.JPG)
+![usage dashboard](https://user-images.githubusercontent.com/37014061/214874949-a727e244-a6bd-4b90-8aca-b74b6ab487f6.JPG)
