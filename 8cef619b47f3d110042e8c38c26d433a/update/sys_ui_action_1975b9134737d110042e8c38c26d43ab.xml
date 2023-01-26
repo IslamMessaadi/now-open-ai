@@ -7,7 +7,7 @@
 
 }]]></client_script_v2>
         <comments/>
-        <condition> gs.hasRole("x_307427_now_open.admin") &amp;&amp; current.processing != "ready"</condition>
+        <condition> gs.hasRole("x_307427_now_open.admin") &amp;&amp; current.processing != "start"  &amp;&amp; current.processing != "processing"</condition>
         <form_action>true</form_action>
         <form_button>true</form_button>
         <form_button_v2>false</form_button_v2>
@@ -30,7 +30,7 @@
         <name>Generate Response</name>
         <onclick/>
         <order>100</order>
-        <script><![CDATA[current.setValue('processing', "ready");
+        <script><![CDATA[current.setValue('processing', "start");
 current.update();
 gs.addInfoMessage(gs.getMessage("Trying to get OPEN AI response based on the prompt input."));
 action.setRedirectURL(current);]]></script>

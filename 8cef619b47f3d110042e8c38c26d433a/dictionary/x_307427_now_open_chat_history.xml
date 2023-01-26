@@ -10,6 +10,7 @@
         <element label="Interaction" max_length="32" name="interaction" read_only="true" reference="interaction" type="reference"/>
         <element label="Prompt" max_length="4000" name="prompt" read_only="true" type="string"/>
         <element label="Response" max_length="4000" name="response" read_only="true" type="string"/>
+        <element label="Source" max_length="100" name="source" read_only="true" type="string"/>
         <index name="index">
             <element name="interaction"/>
         </index>

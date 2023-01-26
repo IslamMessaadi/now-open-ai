@@ -15,7 +15,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	OPEN_AI_MAX_TOKENS: +gs.getProperty("x_307427_now_open.open.ai.api.max.tokens"),
 	OPEN_AI_TEMPERATURE: +gs.getProperty("x_307427_now_open.open.ai.api.temperature"),
 	OPEN_AI_BLACK_LIST: gs.getProperty("x_307427_now_open.open.ai.api.blacklist.keywords"),
-	LOG_ON: true,
+	LOG_ON: false,
 	MAX_TIMEOUT: 3000,
 	
 	getOpenAIResponse:function(recOAIA){
@@ -41,21 +41,31 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 
 			var response = r.execute();
 			var responseBody = response.getBody();	 
-			//var httpStatus = response.getStatusCode();
+			var httpStatus = response.getStatusCode();
 
-			var text= JSON.parse(responseBody).choices[0].text;
+			if(httpStatus == 200){
+				var text= JSON.parse(responseBody).choices[0].text;
 
-			text= text.replace(/\n/g,'<br>');
-			
-			if(text && text != ""){
-				recOAIA.answer= text;
-				recOAIA.processing= "success";
-				recOAIA.update();
-			}else{
-				recOAIA.answer= "No response!, Try with different prompt value";
+				text= text.replace(/\n/g,'<br>');
+				
+				if(text && text != ""){
+					recOAIA.answer= text;
+					recOAIA.processing= "success";
+					recOAIA.update();
+				}else{
+					recOAIA.answer= "No response!, Try with different prompt value";
+					recOAIA.processing= "failed";
+					recOAIA.update();
+				}
+
+				this.saveHistory(JSON.parse(responseBody).id, recGR.getValue("prompt"), text, "OpenAI Answer");
+
+			}else {
+				recOAIA.answer= "OpenAI Service Temporarily Unavailable ("+httpStatus+")";
 				recOAIA.processing= "failed";
 				recOAIA.update();
 			}
+			
 		}
 		catch(ex) {
 			return ex.message;
@@ -66,12 +76,12 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 		try { 
 			
 			if(this.LOG_ON){
-				//level01
+				//level00
 				gs.info("level00 ---> " + previousResponse);
 				gs.info("level00 ---> " + vaInput);
 			}
 
-			/*var previous_prompt = "i wanna eat";
+			/*var previous_prompt = "what is servicenow?";
 			var user_response = "What would you like to eat?";
 			var history = "Bot: " + previous_prompt + "\nUser: " + user_response;
 			var context = "{\"previous_prompt\":\"" + previous_prompt + "\", \"user_response\":\"" + user_response + "\"}";
@@ -93,7 +103,6 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 				//level01
 				gs.info("level01 ---> " + raw);
 			}
-			
 			
 			var r = new sn_ws.RESTMessageV2('x_307427_now_open.Open AI', 'POST');
 			r.setRequestHeader("Authorization", "Bearer " + this.OPEN_AI_KEY);
@@ -128,7 +137,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 					text= text.replace(/^(\.*\s*)/gm, "");
 				}
 				
-				this.saveHistory(answerObj.id, vaInput.toString(), text);
+				this.saveHistory(answerObj.id, vaInput.toString(), text, "Virtual Agent");
 	
 				if(this.LOG_ON){
 					//level04
@@ -137,7 +146,78 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 			
 				return text;
 			}else {
-				return "OpenAI Service Temporarily Unavailable (Server-Side)";
+				return "OpenAI Service Temporarily Unavailable ("+httpStatus+")";
+			}
+		}
+		catch(ex) {
+			return ex.message;
+		}
+	},
+
+	getOpenAIResponseContext:function(history , prompt, source){
+		try { 
+			
+			if(this.LOG_ON){
+				//level00
+				gs.info("level00 ---> " + history);
+				gs.info("level00 ---> " + prompt);
+			}
+
+			var raw = JSON.stringify({
+				"model": this.OPEN_AI_MODEL,
+				"prompt": history ? history + " " + prompt : "" + prompt,
+				"temperature": this.OPEN_AI_TEMPERATURE,
+				"max_tokens": this.OPEN_AI_MAX_TOKENS,
+			});
+
+			if(this.LOG_ON){
+				//level01
+				gs.info("level01 ---> " + raw);
+			}
+			
+			var r = new sn_ws.RESTMessageV2('x_307427_now_open.Open AI', 'POST');
+			r.setRequestHeader("Authorization", "Bearer " + this.OPEN_AI_KEY);
+			r.setRequestHeader("Content-Type", "application/json");
+			r.setHttpTimeout(this.MAX_TIMEOUT); 
+			r.setRequestBody(raw);
+			var response = r.execute();
+			var responseBody = response.getBody();	 
+			var httpStatus = response.getStatusCode();
+
+			if(httpStatus == 200){
+				if(this.LOG_ON){
+					//level02
+					gs.info("level02 ---> " + httpStatus +" - "+ responseBody);
+				}
+	
+				if(JSON.parse(responseBody).error){
+					return JSON.parse(responseBody).error.message +"\nPlease dont forget to update api key property.";
+				}
+	
+				var answerObj= JSON.parse(responseBody);
+				var text= answerObj.choices[0].text.trim();
+	
+				if(this.LOG_ON){
+					//level03
+					gs.info("level03 ---> " + text);
+					//gs.info("level: 3 " + /^(\.*\s*)/gm.test(text));
+				}
+	
+				//error by response! not accepted as a prompet!
+				if(/^(\.*\s*)/gm.test(text)){
+					text= text.replace(/^(\.*\s*)/gm, "");
+				}
+				
+				this.saveHistory(answerObj.id, prompt, text, source);
+	
+				if(this.LOG_ON){
+					//level04
+					gs.info("level04 ---> " +  text);
+				}
+			
+				return text;
+			}else {
+				return "OpenAI Service Temporarily Unavailable ("+httpStatus+")";
 			}
 		}
 		catch(ex) {
@@ -145,7 +225,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 		}
 	},
 	
-	saveHistory:function(id, prompt, response){
+	saveHistory:function(id, prompt, response, source){
 		var flagged= false;
 		var flag= "";
 		var blk= this.OPEN_AI_BLACK_LIST.toLowerCase().split(",") || [];
@@ -174,6 +254,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 		chtGr.response= response;
 		chtGr.interaction = interactionRefId;
 		chtGr.flag = flag;
+		chtGr.source = source;
 		chtGr.insert();
 	},
 	
@@ -188,9 +269,19 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 		currentGr.addEncodedQuery("state=work_in_progress^type=chat^assigned_to=200c5e64f94611108c8bd16244dfe704^opened_forDYNAMIC90d1921e5f510100a9ad2572f2b477fe");
 		currentGr.query();
 		if (currentGr.next()) {
-		   return currentGr.sys_id;
+		return currentGr.sys_id;
 		}
 		return null;
+	},
+
+	getContexts:function(){
+		var contextList=[];
+		var historyGr = new GlideRecord("x_307427_now_open_chat_history");
+		historyGr.query();
+		while (historyGr.next()) {
+			contextList.push({source: historyGr.source, prompt: historyGr.prompt});
+		}
+		return contextList;
 	},
 	
     type: 'openaiUtils'
