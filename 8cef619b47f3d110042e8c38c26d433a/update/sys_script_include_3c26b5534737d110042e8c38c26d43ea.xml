@@ -253,7 +253,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 			flag= "informative";
 		}
 
-		var interactionRefId= this.getInteraction();
+		var interactionRefId= source == "Virtual Agent" ? this.getInteraction() : "";
 		var chtGr = new GlideRecord("x_307427_now_open_chat_history");
 		chtGr.id = id;
 		chtGr.prompt= prompt;
