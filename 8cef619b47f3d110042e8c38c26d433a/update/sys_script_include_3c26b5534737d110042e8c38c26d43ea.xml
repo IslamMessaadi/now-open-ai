@@ -15,7 +15,7 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	OPEN_AI_MAX_TOKENS: +gs.getProperty("x_307427_now_open.open.ai.api.max.tokens"),
 	OPEN_AI_TEMPERATURE: +gs.getProperty("x_307427_now_open.open.ai.api.temperature"),
 	OPEN_AI_BLACK_LIST: gs.getProperty("x_307427_now_open.open.ai.api.blacklist.keywords"),
-	LOG_ON: false,
+	LOG_ON: true,
 	MAX_TIMEOUT: 3000,
 	
 	getOpenAIResponse:function(recOAIA){
@@ -145,8 +145,11 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 				}
 			
 				return text;
+
 			}else {
+
 				return "OpenAI Service Temporarily Unavailable ("+httpStatus+")";
+
 			}
 		}
 		catch(ex) {
@@ -216,8 +219,11 @@ openaiUtils.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 				}
 			
 				return text;
+
 			}else {
+
 				return "OpenAI Service Temporarily Unavailable ("+httpStatus+")";
+
 			}
 		}
 		catch(ex) {
